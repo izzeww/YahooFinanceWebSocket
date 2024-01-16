@@ -5,8 +5,6 @@ namespace YahooFinanceWebSocket
 {
     internal class Program
     {
-        public static PricingData DeserializePricingData(byte[] protoBufMessageBytes)
-      => PricingData.Parser.ParseFrom(protoBufMessageBytes);
         static async Task Main(string[] args)
         {
             Console.WriteLine("Hello, World!");
