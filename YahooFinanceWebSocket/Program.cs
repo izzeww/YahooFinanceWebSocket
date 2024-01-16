@@ -18,7 +18,7 @@ namespace YahooFinanceWebSocket
                 try
                 {
                     await client.ConnectAsync(serviceUri, cancellationToken.Token);
-                    string message = "{\"subscribe\":[\"^IXIC\"]}";
+                    string message = "{\"subscribe\":[\"ETH-USD\", \"BTC-USD\", \"YM=F\", \"ES=F\", \"QM=F\", \"RTY=F\", \"MNQ=F\", \"NQ=F\"]}";
                     ArraySegment<byte> byteToSend = new ArraySegment<byte>(Encoding.UTF8.GetBytes(message));
 
                     if (client.State == WebSocketState.Open)
