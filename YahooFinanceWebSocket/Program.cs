@@ -8,41 +8,37 @@ namespace YahooFinanceWebSocket
     {
         static async Task Main(string[] args)
         {
-            using (ClientWebSocket client = new ClientWebSocket())
+            using var client = new ClientWebSocket();
+            var cts = new CancellationTokenSource();
+            cts.CancelAfter(TimeSpan.FromSeconds(1200));
+
+            try
             {
-                Uri serviceUri = new Uri("wss://streamer.finance.yahoo.com/");
-                var cancellationToken = new CancellationTokenSource();
-                cancellationToken.CancelAfter(TimeSpan.FromSeconds(1200));
+                await client.ConnectAsync(new Uri("wss://streamer.finance.yahoo.com/"), cts.Token);
+                var message = "{\"subscribe\":[\"INVE-B.ST\", \"^OMX\", \"SBB-B.ST\"]}";
+                var byteToSend = new ArraySegment<byte>(Encoding.UTF8.GetBytes(message));
 
-                try
+                if (client.State == WebSocketState.Open)
                 {
-                    await client.ConnectAsync(serviceUri, cancellationToken.Token);
-                    string message = "{\"subscribe\":[\"INVE-B.ST\", \"^OMX\", \"SBB-B.ST\"]}";
-                    ArraySegment<byte> byteToSend = new ArraySegment<byte>(Encoding.UTF8.GetBytes(message));
-
-                    if (client.State == WebSocketState.Open)
+                    Console.WriteLine("Connection successful.");
+                    await client.SendAsync(byteToSend, WebSocketMessageType.Text, true, cts.Token);
+                    var responseBuffer = new byte[1024];
+                    var offset = 0;
+                    var packet = 1024;
+                    while (true)
                     {
-                        Console.WriteLine("Connection successful.");
-                        await client.SendAsync(byteToSend, WebSocketMessageType.Text, true, cancellationToken.Token);
-                        var responseBuffer = new byte[1024];
-                        var offset = 0;
-                        var packet = 1024;
-                        while (true)
-                        {
-                            ArraySegment<byte> byteReceived = new ArraySegment<byte>(responseBuffer, offset, packet);
-                            WebSocketReceiveResult response = await client.ReceiveAsync(byteReceived, cancellationToken.Token);
-                            var responseMessage = Encoding.UTF8.GetString(responseBuffer, offset, response.Count);
+                        var byteReceived = new ArraySegment<byte>(responseBuffer, offset, packet);
+                        var response = await client.ReceiveAsync(byteReceived, cts.Token);
+                        var responseMessage = Encoding.UTF8.GetString(responseBuffer, offset, response.Count);
 
-                            var x = Convert.FromBase64String(responseMessage);
-                            var y = Serializer.Deserialize<PricingData>((ReadOnlySpan<byte>)x);
+                        var x = Convert.FromBase64String(responseMessage);
+                        var y = Serializer.Deserialize<PricingData>((ReadOnlySpan<byte>)x);
 
-                            Console.WriteLine($"{y.Id}: {y.Price}, at {DateTimeOffset.FromUnixTimeMilliseconds(y.Time).DateTime}");
-                        }
+                        Console.WriteLine($"{y.Id}: {y.Price}, at {DateTimeOffset.FromUnixTimeMilliseconds(y.Time).TimeOfDay}");
                     }
                 }
-                catch (WebSocketException e) { Console.WriteLine(e.Message); }
             }
-            Console.ReadLine();
+            catch (WebSocketException e) { Console.WriteLine(e.Message); }
         }
     }
 }
