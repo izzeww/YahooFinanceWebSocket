@@ -17,7 +17,7 @@ namespace YahooFinanceWebSocket
                 try
                 {
                     await client.ConnectAsync(serviceUri, cancellationToken.Token);
-                    string message = "{\"subscribe\":[\"ETH-USD\", \"BTC-USD\", \"YM=F\", \"ES=F\", \"QM=F\", \"RTY=F\", \"MNQ=F\", \"NQ=F, \"\"^GSPC\", \"INVE-B.ST\", \"^OMX\", \"SBB-B.ST\"]}";
+                    string message = "{\"subscribe\":[\"INVE-B.ST\", \"^OMX\", \"SBB-B.ST\"]}";
                     ArraySegment<byte> byteToSend = new ArraySegment<byte>(Encoding.UTF8.GetBytes(message));
 
                     if (client.State == WebSocketState.Open)
@@ -41,7 +41,6 @@ namespace YahooFinanceWebSocket
                     }
                 }
                 catch (WebSocketException e) { Console.WriteLine(e.Message); }
-
             }
             Console.ReadLine();
         }
